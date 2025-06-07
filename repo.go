@@ -228,6 +228,6 @@ type AdvanceTime struct {
 	Duration time.Duration
 }
 
-func (op AdvanceTime) Apply(t *testing.T, state *RepoState) {
+func (op AdvanceTime) Apply(_ *testing.T, state *RepoState) {
 	state.Now = state.Now.Add(op.Duration)
 }
