@@ -121,7 +121,15 @@ type Commit struct {
 func (op Commit) Apply(t *testing.T, state *RepoState) {
 	author := op.Author
 	if author == nil {
-		author = &state.DefaultAuthor
+		// Create a new signature with the current time
+		author = &object.Signature{
+			Name:  state.DefaultAuthor.Name,
+			Email: state.DefaultAuthor.Email,
+			When:  state.Now,
+		}
+	} else {
+		// Update the When field of the provided author
+		author.When = state.Now
 	}
 	hash, err := state.Worktree.Commit(op.Message, &git.CommitOptions{
 		Author: author,
@@ -160,9 +168,15 @@ type TagAnnotated struct {
 }
 
 func (op TagAnnotated) Apply(t *testing.T, state *RepoState) {
+	// Create a new tagger with the current time
+	tagger := &object.Signature{
+		Name:  state.DefaultAuthor.Name,
+		Email: state.DefaultAuthor.Email,
+		When:  state.Now,
+	}
 	_, err := state.Repo.CreateTag(op.Name, state.LastHash, &git.CreateTagOptions{
 		Message: op.Message,
-		Tagger:  &state.DefaultAuthor,
+		Tagger:  tagger,
 	})
 	require.NoError(t, err)
 

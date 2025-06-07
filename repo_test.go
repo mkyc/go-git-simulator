@@ -38,7 +38,7 @@ func TestFirstFile(t *testing.T) {
 	headCommit, err := r.CommitObject(headRef.Hash())
 	require.NoError(t, err)
 	require.Equal(t, "commit1", headCommit.Message)
-	require.Equal(t, "8617236", headCommit.Hash.String()[:7])
+	require.Equal(t, "4e9da30", headCommit.Hash.String()[:7])
 }
 
 func TestTagExists(t *testing.T) {
@@ -55,7 +55,7 @@ func TestTagExists(t *testing.T) {
 	require.NoError(t, err)
 	ref, err := r.Tag("v1.0.0")
 	require.NoError(t, err)
-	require.Equal(t, "8617236", ref.Hash().String()[:7])
+	require.Equal(t, "4e9da30", ref.Hash().String()[:7])
 }
 
 func TestTagAnnotatedExists(t *testing.T) {
@@ -72,7 +72,7 @@ func TestTagAnnotatedExists(t *testing.T) {
 	require.NoError(t, err)
 	ref, err := r.Tag("v1.0.0")
 	require.NoError(t, err)
-	require.Equal(t, "86f1655", ref.Hash().String()[:7])
+	require.Equal(t, "2a00ccc", ref.Hash().String()[:7])
 }
 
 func TestBranchAndCheckout(t *testing.T) {
@@ -93,7 +93,7 @@ func TestBranchAndCheckout(t *testing.T) {
 	headCommit, err := r.CommitObject(headRef.Hash())
 	require.NoError(t, err)
 	require.Equal(t, "commit2", headCommit.Message)
-	require.Equal(t, "1810fa6", headCommit.Hash.String()[:7])
+	require.Equal(t, "40338e3", headCommit.Hash.String()[:7])
 }
 
 func TestCheckout(t *testing.T) {
@@ -115,5 +115,28 @@ func TestCheckout(t *testing.T) {
 	headCommit, err := r.CommitObject(headRef.Hash())
 	require.NoError(t, err)
 	require.Equal(t, "commit1", headCommit.Message)
-	require.Equal(t, "8617236", headCommit.Hash.String()[:7])
+	require.Equal(t, "4e9da30", headCommit.Hash.String()[:7])
+}
+
+func TestAdvanceTime(t *testing.T) {
+	path := setupRepo(t, []RepoOperation{
+		InitRepo{DefaultBranch: "main"},
+		AdvanceTime{Duration: 10 * time.Second},
+		NewFile{Path: "file1.txt", Content: "content1"},
+		Commit{Message: "commit1"},
+	})
+
+	r, err := git.PlainOpen(path)
+	require.NoError(t, err)
+	headRef, err := r.Head()
+	require.NoError(t, err)
+	require.Equal(t, "main", headRef.Name().Short())
+	headCommit, err := r.CommitObject(headRef.Hash())
+	require.NoError(t, err)
+	require.Equal(t, "commit1", headCommit.Message)
+	require.Equal(t, "1c0002a", headCommit.Hash.String()[:7])
+	require.Equal(t,
+		headCommit.Author.When.UTC(),
+		time.Date(2025, 6, 7, 1, 49, 20, 0, time.UTC).UTC(),
+	)
 }
