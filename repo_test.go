@@ -194,3 +194,41 @@ func TestCheckoutTag(t *testing.T) {
 	require.Equal(t, "commit1", headCommit.Message)
 	require.Equal(t, "4e9da30", headCommit.Hash.String()[:7])
 }
+
+func TestInitRepo(t *testing.T) {
+	tests := []struct {
+		name          string
+		defaultBranch string
+	}{
+		{
+			name:          "main as default branch",
+			defaultBranch: "main",
+		},
+		{
+			name:          "custom branch name",
+			defaultBranch: "development",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := setupRepo(t, []RepoOperation{
+				InitRepo{DefaultBranch: tt.defaultBranch},
+			})
+
+			r, err := git.PlainOpen(path)
+			require.NoError(t, err)
+
+			// Get the symbolic reference using the Storer directly
+			ref, err := r.Storer.Reference(plumbing.ReferenceName("refs/remotes/origin/HEAD"))
+			require.NoError(t, err)
+
+			// Verify it's a symbolic reference
+			require.Equal(t, plumbing.SymbolicReference, ref.Type())
+
+			// Verify it points to the correct target
+			expectedTarget := plumbing.ReferenceName("refs/remotes/origin/" + tt.defaultBranch)
+			require.Equal(t, expectedTarget, ref.Target())
+		})
+	}
+}
