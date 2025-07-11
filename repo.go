@@ -79,6 +79,13 @@ func (op InitRepo) Apply(t *testing.T, state *RepoState) {
 	wt, err := r.Worktree()
 	require.NoError(t, err)
 
+	// Create the symbolic reference to the default branch
+	remoteHeadRef := plumbing.NewSymbolicReference(
+		plumbing.ReferenceName("refs/remotes/origin/HEAD"),
+		plumbing.ReferenceName("refs/remotes/origin/"+op.DefaultBranch),
+	)
+	require.NoError(t, r.Storer.SetReference(remoteHeadRef))
+
 	state.Repo = r
 	state.Worktree = wt
 
