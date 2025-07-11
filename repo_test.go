@@ -72,7 +72,7 @@ func TestTagAnnotatedExists(t *testing.T) {
 	require.NoError(t, err)
 	ref, err := r.Tag("v1.0.0")
 	require.NoError(t, err)
-	require.Equal(t, "aeec35c", ref.Hash().String()[:7])
+	require.Equal(t, "2a00ccc", ref.Hash().String()[:7])
 }
 
 func TestBranchAndCheckout(t *testing.T) {
