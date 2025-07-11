@@ -254,3 +254,31 @@ func (op SetDefaultBranch) Apply(t *testing.T, state *RepoState) {
 		state.Now = state.Now.Add(state.DefaultAdvanceTime)
 	}
 }
+
+type CheckoutTag struct {
+	Name string
+}
+
+func (op CheckoutTag) Apply(t *testing.T, state *RepoState) {
+	r, err := git.PlainOpen(state.Path)
+	if err != nil {
+		t.Fatalf("Failed to open repository: %v", err)
+	}
+
+	tagRef, err := r.Tag(op.Name)
+	if err != nil {
+		t.Fatalf("Failed to find tag %s: %v", op.Name, err)
+	}
+
+	w, err := r.Worktree()
+	if err != nil {
+		t.Fatalf("Failed to get worktree: %v", err)
+	}
+
+	err = w.Checkout(&git.CheckoutOptions{
+		Hash: tagRef.Hash(),
+	})
+	if err != nil {
+		t.Fatalf("Failed to checkout tag %s: %v", op.Name, err)
+	}
+}

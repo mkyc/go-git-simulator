@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -155,4 +156,41 @@ func TestSetDefaultBranch(t *testing.T) {
 	headRef, err := r.Head()
 	require.NoError(t, err)
 	require.Equal(t, "branch1", headRef.Name().Short())
+}
+
+func TestCheckoutTag(t *testing.T) {
+	path := setupRepo(t, []RepoOperation{
+		InitRepo{DefaultBranch: "main"},
+		NewFile{Path: "file1.txt", Content: "content1"},
+		Commit{Message: "commit1"},
+		Tag{Name: "v1.0.0"},
+		NewFile{Path: "file2.txt", Content: "content2"},
+		Commit{Message: "commit2"},
+		CheckoutTag{Name: "v1.0.0"},
+	})
+
+	r, err := git.PlainOpen(path)
+	require.NoError(t, err)
+
+	// Get HEAD reference
+	headRef, err := r.Head()
+	require.NoError(t, err)
+
+	// Get the commit at HEAD
+	headCommit, err := r.CommitObject(headRef.Hash())
+	require.NoError(t, err)
+
+	// Get the tag reference
+	tagRef, err := r.Tag("v1.0.0")
+	require.NoError(t, err)
+
+	// Verify that HEAD is at the commit where the tag was created
+	require.Equal(t, tagRef.Hash().String(), headRef.Hash().String())
+
+	// Verify that we're in a detached HEAD state (HEAD is a hash reference, not a symbolic reference)
+	require.Equal(t, plumbing.HashReference, headRef.Type())
+
+	// Additional verification that we're at the first commit
+	require.Equal(t, "commit1", headCommit.Message)
+	require.Equal(t, "4e9da30", headCommit.Hash.String()[:7])
 }
