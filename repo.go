@@ -231,3 +231,26 @@ type AdvanceTime struct {
 func (op AdvanceTime) Apply(_ *testing.T, state *RepoState) {
 	state.Now = state.Now.Add(op.Duration)
 }
+
+type SetDefaultBranch struct {
+	DefaultBranch string
+	AdvanceTimeBy *time.Duration
+}
+
+func (op SetDefaultBranch) Apply(t *testing.T, state *RepoState) {
+	state.DefaultBranch = op.DefaultBranch
+
+	ref := plumbing.NewSymbolicReference(
+		plumbing.HEAD,
+		plumbing.NewBranchReferenceName(op.DefaultBranch),
+	)
+
+	err := state.Repo.Storer.SetReference(ref)
+	require.NoError(t, err)
+
+	if op.AdvanceTimeBy != nil {
+		state.Now = state.Now.Add(*op.AdvanceTimeBy)
+	} else {
+		state.Now = state.Now.Add(state.DefaultAdvanceTime)
+	}
+}
