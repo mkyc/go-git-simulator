@@ -164,14 +164,15 @@ func (op Tag) Apply(t *testing.T, state *RepoState) {
 type TagAnnotated struct {
 	Name          string
 	Message       string
+	Author        struct{ Name, Email string }
 	AdvanceTimeBy *time.Duration
 }
 
 func (op TagAnnotated) Apply(t *testing.T, state *RepoState) {
 	// Create a new tagger with the current time
 	tagger := &object.Signature{
-		Name:  state.DefaultAuthor.Name,
-		Email: state.DefaultAuthor.Email,
+		Name:  op.Author.Name,
+		Email: op.Author.Email,
 		When:  state.Now,
 	}
 	_, err := state.Repo.CreateTag(op.Name, state.LastHash, &git.CreateTagOptions{
