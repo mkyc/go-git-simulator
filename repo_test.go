@@ -72,7 +72,7 @@ func TestTagAnnotatedExists(t *testing.T) {
 	require.NoError(t, err)
 	ref, err := r.Tag("v1.0.0")
 	require.NoError(t, err)
-	require.Equal(t, "2a00ccc", ref.Hash().String()[:7])
+	require.Equal(t, "aeec35c", ref.Hash().String()[:7])
 }
 
 func TestBranchAndCheckout(t *testing.T) {
@@ -139,4 +139,20 @@ func TestAdvanceTime(t *testing.T) {
 		headCommit.Author.When.UTC(),
 		time.Date(2025, 6, 7, 1, 49, 20, 0, time.UTC).UTC(),
 	)
+}
+
+func TestSetDefaultBranch(t *testing.T) {
+	path := setupRepo(t, []RepoOperation{
+		InitRepo{DefaultBranch: "main"},
+		NewFile{Path: "file1.txt", Content: "content1"},
+		Commit{Message: "commit1"},
+		BranchAndCheckout{Name: "branch1"},
+		SetDefaultBranch{DefaultBranch: "branch1"},
+	})
+
+	r, err := git.PlainOpen(path)
+	require.NoError(t, err)
+	headRef, err := r.Head()
+	require.NoError(t, err)
+	require.Equal(t, "branch1", headRef.Name().Short())
 }
